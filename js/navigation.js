@@ -18,16 +18,14 @@ function showPage(pageId){
     customers:'العملاء والمقاسات',
     orders:'الطلبات والفواتير',
     inventory:'المخزون',
-    reports:'التقارير والأرباح',
-    employees:'إدارة الموظفين'
+    reports:'التقارير والأرباح'
   };
   const subtitles={
     dashboard:'نظرة شاملة على أداء المحل',
     customers:'إدارة بيانات العملاء وقياساتهم الجديدة',
     orders:'متابعة طلبات التفصيل وإدارة المدفوعات',
     inventory:'تتبع كميات الأقمشة وأنواع الثياب والألوان',
-    reports:'تحليل أداء المحل والمبيعات والأرباح',
-    employees:'إضافة وتعديل وحذف حسابات الموظفين'
+    reports:'تحليل أداء المحل والمبيعات والأرباح'
   };
   const titleEl = document.getElementById('page-title');
   if(titleEl) titleEl.textContent = titles[pageId] || pageId;
@@ -40,7 +38,6 @@ function showPage(pageId){
   if(pageId==='orders') renderOrders();
   if(pageId==='inventory') renderInventory();
   if(pageId==='reports') renderReports();
-  if(pageId==='employees') renderEmployees();
 
   // close any dropdown/modal
   const dd = document.getElementById('actionDropdown');

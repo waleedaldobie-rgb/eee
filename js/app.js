@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     renderOrders();
     renderInventory();
     renderReports();
-    renderEmployees();
     console.log('TailorPro initialized');
   } catch(e){
     console.error('DB init failed', e);
