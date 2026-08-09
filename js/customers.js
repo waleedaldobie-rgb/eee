@@ -150,18 +150,29 @@ async function saveCustomer(e){
   if(id){
     const existing = await getById('customers', parseInt(id));
     if(existing?.measurements) data.measurements = existing.measurements;
+    if(existing?.createdAt) data.createdAt = existing.createdAt;
     data.id=parseInt(id);
     await putData('customers',data);
     showToast('تم تحديث بيانات العميل');
     selectedCustomerId = parseInt(id);
+    closeModal('customerModal');
+    await renderCustomers();
+    renderDashboard();
+    // بعد التعديل، ابقى في التفاصيل واعرض القياسات
+    const updated = await getById('customers', parseInt(id));
+    if(updated) renderCustomerDetail(updated);
   } else {
     const newId = await addData('customers',data);
-    showToast('تم إضافة العميل بنجاح');
     selectedCustomerId = newId;
+    closeModal('customerModal');
+    await renderCustomers();
+    renderDashboard();
+    showToast('تم إضافة العميل — الآن أدخل قياساته','success');
+    // افتح جدول القياسات تلقائياً للعميل الجديد
+    setTimeout(async ()=>{
+      await openMeasurementsWorkspace(newId);
+    }, 300);
   }
-  closeModal('customerModal');
-  renderCustomers();
-  renderDashboard();
 }
 async function deleteCustomer(id){
   if(!confirm('هل أنت متأكد من حذف هذا العميل وجميع طلباته؟')) return;
