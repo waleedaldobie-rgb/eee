@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الخياط برو - نظام إدارة الخياطة</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="toast" class="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
+
+<!-- Sidebar -->
+<aside class="sidebar text-white">
+<div class="p-6 border-b border-gray-800">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+<i class="fas fa-cut text-xl"></i>
+</div>
+<div>
+<h1 class="font-bold text-lg tracking-tight">الخياط برو</h1>
+<p class="text-xs text-slate-400 mt-0.5">نظام إدارة الخياطة</p>
+</div>
+</div>
+</div>
+<nav class="mt-3 px-3">
+<div onclick="showPage('dashboard')" class="nav-item active px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-dashboard">
+<i class="fas fa-chart-pie"></i><span class="font-medium">لوحة التحكم</span>
+</div>
+<div onclick="showPage('customers')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-customers">
+<i class="fas fa-users"></i><span class="font-medium">العملاء والمقاسات</span>
+</div>
+<div onclick="showPage('orders')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-orders">
+<i class="fas fa-receipt"></i><span class="font-medium">الطلبات والفواتير</span>
+</div>
+<div onclick="showPage('inventory')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-inventory">
+<i class="fas fa-boxes-stacked"></i><span class="font-medium">المخزون</span>
+</div>
+<div onclick="showPage('reports')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-reports">
+<i class="fas fa-chart-line"></i><span class="font-medium">التقارير</span>
+</div>
+<div onclick="showPage('employees')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-employees">
+<i class="fas fa-user-tie"></i><span class="font-medium">الموظفين</span>
+</div>
+</nav>
+<div class="absolute bottom-0 w-full p-4 border-t border-gray-800">
+<button onclick="backupDB()" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm flex items-center justify-center gap-2 transition mb-2">
+<i class="fas fa-download text-blue-400"></i> <span>نسخ احتياطي</span>
+</button>
+<button onclick="document.getElementById('restoreInput').click()" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm flex items-center justify-center gap-2 transition">
+<i class="fas fa-upload text-green-400"></i> <span>استعادة نسخة</span>
+</button>
+<input type="file" id="restoreInput" class="hidden" accept=".json" onchange="restoreDB(this)">
+<p class="text-xs text-slate-500 text-center mt-3">الإصدار 2.0 — أوفلاين بالكامل</p>
+</div>
+</aside>
+
+<!-- Main -->
+<main class="main-content">
+<header class="main-header">
+<div>
+<h2 class="text-2xl font-black text-slate-900" id="page-title">لوحة التحكم</h2>
+<p class="text-sm text-slate-400 mt-1" id="page-subtitle">نظرة شاملة على أداء المحل</p>
+</div>
+<div class="flex items-center gap-3">
+<button onclick="showNotifications()" class="relative p-3 text-slate-400 hover:text-slate-600 bg-white rounded-xl shadow-sm border border-slate-100 transition">
+<i class="fas fa-bell text-lg"></i>
+<span id="notifBadge" class="absolute top-2 left-2 w-2.5 h-2.5 bg-red-500 rounded-full notification-dot hidden"></span>
+</button>
+<div class="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl shadow-sm border border-slate-100">
+<div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+<i class="fas fa-user"></i>
+</div>
+<div>
+<span class="font-bold text-sm text-slate-800 block leading-tight">علي الصيادي</span>
+<span class="text-xs text-slate-400">المدير</span>
+</div>
+</div>
+<span class="text-slate-400 text-sm font-medium bg-white px-4 py-2.5 rounded-xl shadow-sm border border-slate-100" id="currentDate"></span>
+</div>
+</header>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page active">
+  <!-- Top stats -->
+  <div class="grid grid-cols-4 gap-4 mb-5">
+    <div class="card p-5 stat-card border-r-4 border-r-blue-500">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">طلبات اليوم</p>
+          <h3 class="text-3xl font-black text-slate-900 mt-2" id="dashTodayOrders">0</h3>
+          <p class="text-xs text-slate-400 mt-1" id="dashTodaySub">—</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i class="fas fa-calendar-day text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card border-r-4 border-r-emerald-500">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">المبيعات (المسلّمة)</p>
+          <h3 class="text-2xl font-black text-slate-900 mt-2"><span id="dashTotalSales">0</span> <span class="text-sm font-normal text-slate-400">ر.ي</span></h3>
+          <p class="text-xs text-emerald-600 mt-1"><i class="fas fa-arrow-up ml-1"></i>مكتملة</p>
+        </div>
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i class="fas fa-sack-dollar text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card border-r-4 border-r-amber-500">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">المبالغ المستحقة</p>
+          <h3 class="text-2xl font-black text-amber-600 mt-2"><span id="dashDueAmount">0</span> <span class="text-sm font-normal text-slate-400">ر.ي</span></h3>
+          <p class="text-xs text-slate-400 mt-1" id="dashDueCount">0 طلب غير مسدد</p>
+        </div>
+        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><i class="fas fa-hand-holding-dollar text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card border-r-4 border-r-red-500">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">الطلبات المتأخرة</p>
+          <h3 class="text-3xl font-black text-red-600 mt-2" id="dashOverdue">0</h3>
+          <p class="text-xs text-slate-400 mt-1">تجاوزت تاريخ التسليم</p>
+        </div>
+        <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-600"><i class="fas fa-clock text-xl"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-4 gap-4 mb-5">
+    <div class="card p-5 stat-card">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">تم التسليم</p>
+          <h3 class="text-3xl font-black text-slate-800 mt-2" id="dashDelivered">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i class="fas fa-check-circle text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">جاهزة للاستلام</p>
+          <h3 class="text-3xl font-black text-slate-800 mt-2" id="dashReady">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600"><i class="fas fa-box-open text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">تحت التنفيذ</p>
+          <h3 class="text-3xl font-black text-slate-800 mt-2" id="dashProcessing">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center text-violet-600"><i class="fas fa-scissors text-xl"></i></div>
+      </div>
+    </div>
+    <div class="card p-5 stat-card">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-400 text-xs font-bold tracking-wider">طلبات جديدة</p>
+          <h3 class="text-3xl font-black text-slate-800 mt-2" id="dashNew">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i class="fas fa-plus-circle text-xl"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lowStockAlert" class="alert-box warning mb-5 hidden">
+    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 flex-shrink-0"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="flex-1">
+      <h4 class="font-bold text-amber-900 mb-1 text-sm">تنبيه مخزون منخفض</h4>
+      <ul class="text-sm text-amber-800 space-y-1" id="lowStockList"></ul>
+    </div>
+    <button onclick="showPage('inventory')" class="btn-primary text-sm flex-shrink-0">الذهاب للمخزون</button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-5">
+    <div class="card p-6">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="section-title mb-0"><i class="fas fa-clock-rotate-left"></i> آخر 5 طلبات</h3>
+        <button onclick="showPage('orders')" class="btn-ghost text-sm"><i class="fas fa-arrow-left ml-1"></i> عرض الكل</button>
+      </div>
+      <div id="recentOrdersList"></div>
+    </div>
+    <div class="card p-6">
+      <h3 class="section-title"><i class="fas fa-bell"></i> آخر الإشعارات</h3>
+      <div id="recentNotifications" class="space-y-3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMERS -->
+<div id="customers" class="page">
+  <div class="flex justify-between items-center mb-5 gap-4">
+    <button onclick="openCustomerModal()" class="btn-primary"><i class="fas fa-plus"></i> إضافة عميل جديد</button>
+    <div class="search-box flex-1 max-w-md">
+      <input type="text" id="customerSearch" placeholder="ابحث بالاسم أو رقم الجوال..." class="form-input" oninput="renderCustomers()">
+      <i class="fas fa-search"></i>
+    </div>
+  </div>
+  <div class="grid grid-cols-12 gap-5" id="customersLayout">
+    <div class="col-span-4">
+      <div class="card p-4">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="font-bold text-sm text-slate-700">قائمة العملاء</h4>
+          <span id="customersCountBadge" class="badge-count">0</span>
+        </div>
+        <div id="customersList" class="space-y-2 max-h-[72vh] overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+    <div class="col-span-8">
+      <div id="customerDetail" class="card p-6 min-h-[60vh]">
+        <div class="empty-state">
+          <i class="fas fa-user-group"></i>
+          <p>اختر عميلاً من القائمة لعرض التفاصيل</p>
+          <span class="text-xs text-slate-400">أو أضف عميلاً جديداً للبدء</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Measurements Workspace - Full Screen Large Workspace -->
+  <div id="measurementsWorkspace" class="measurements-workspace hidden">
+    <div class="measurements-header">
+      <div class="flex items-center gap-4">
+        <button onclick="closeMeasurementsWorkspace()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition"><i class="fas fa-arrow-right"></i></button>
+        <div>
+          <h3 class="text-xl font-black text-slate-900 flex items-center gap-2"><i class="fas fa-ruler-combined text-blue-600"></i> القياسات الأساسية</h3>
+          <p class="text-sm text-slate-400" id="measurementsCustomerName">—</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="closeMeasurementsWorkspace()" class="btn-secondary">إلغاء</button>
+        <button onclick="saveMeasurementsWorkspace()" class="btn-primary"><i class="fas fa-save"></i> حفظ القياسات</button>
+      </div>
+    </div>
+
+    <div class="measurements-body">
+      <!-- Header info bar -->
+      <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl" id="mWorkspaceInitial">؟</div>
+          <div>
+            <div class="font-black text-slate-900" id="mWorkspaceName">—</div>
+            <div class="text-sm text-slate-500" id="mWorkspacePhone">—</div>
+          </div>
+        </div>
+        <div class="text-xs text-slate-400">جميع القياسات بالسنتيمتر • الحقول الحمراء أساسية</div>
+      </div>
+
+      <!-- Three columns layout -->
+      <div class="measurements-grid">
+
+        <!-- Left: Body measurements -->
+        <div class="measurements-col">
+          <div class="measurements-section">
+            <h4 class="measurements-section-title"><i class="fas fa-person"></i> قياسات الجسم</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="measurement-label measurement-label-red">ميلان الكتف <span class="text-red-500">•</span></label>
+                <input type="number" step="0.1" id="m_shoulderSlope" class="form-input measurement-input-red" placeholder="0.0">
+              </div>
+              <div>
+                <label class="measurement-label measurement-label-red">الورك <span class="text-red-500">•</span></label>
+                <input type="number" step="0.1" id="m_hip" class="form-input measurement-input-red" placeholder="0.0">
+              </div>
+              <div>
+                <label class="measurement-label measurement-label-red">الصدر <span class="text-red-500">•</span></label>
+                <input type="number" step="0.1" id="m_chest" class="form-input measurement-input-red" placeholder="0.0">
+              </div>
+              <div class="pt-3 border-t border-slate-100">
+                <label class="measurement-label">الخطوة</label>
+                <input type="number" step="0.1" id="m_step" class="form-input" placeholder="0.0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle: Jabzor + shapes + clearance -->
+        <div class="measurements-col">
+          <div class="measurements-section">
+            <h4 class="measurements-section-title"><i class="fas fa-shirt"></i> الجبزور</h4>
+            <div class="space-y-5">
+              <div>
+                <label class="measurement-label mb-2 block">نوع الجبزور</label>
+                <div class="grid grid-cols-3 gap-2" id="jabzorTypeGroup">
+                  <button type="button" data-value="zip" onclick="selectJabzorType('zip')" class="jabzor-type-btn" id="jabzor_zip">
+                    <i class="fas fa-bars"></i>
+                    <span>سحاب</span>
+                  </button>
+                  <button type="button" data-value="buttonVisible" onclick="selectJabzorType('buttonVisible')" class="jabzor-type-btn" id="jabzor_buttonVisible">
+                    <i class="fas fa-circle-dot"></i>
+                    <span>زرار باين</span>
+                  </button>
+                  <button type="button" data-value="buttonHidden" onclick="selectJabzorType('buttonHidden')" class="jabzor-type-btn" id="jabzor_buttonHidden">
+                    <i class="far fa-circle"></i>
+                    <span>زرار مخفي</span>
+                  </button>
+                </div>
+                <input type="hidden" id="m_jabzorType" value="">
+              </div>
+
+              <div>
+                <label class="measurement-label mb-2 block">شكل الجبزور</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <button type="button" onclick="selectJabzorShape('square')" class="jabzor-shape-btn" id="jabzor_shape_square">
+                    <div class="shape-preview shape-square"></div>
+                    <span>مربع</span>
+                  </button>
+                  <button type="button" onclick="selectJabzorShape('triangle')" class="jabzor-shape-btn" id="jabzor_shape_triangle">
+                    <div class="shape-preview shape-triangle"></div>
+                    <span>مثلث</span>
+                  </button>
+                </div>
+                <input type="hidden" id="m_jabzorShape" value="">
+              </div>
+
+              <div class="pt-4 border-t border-slate-200">
+                <label class="measurement-label">التخاليص <span class="text-slate-400 font-normal text-xs">(قياس مستقل)</span></label>
+                <input type="number" step="0.1" id="m_clearance" class="form-input mt-2" placeholder="0.0">
+                <p class="text-xs text-slate-400 mt-1.5">قياس التخاليص منفصل عن الجبزور</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Lengths + Hand + Neck + Width -->
+        <div class="measurements-col">
+          <div class="measurements-section">
+            <h4 class="measurements-section-title"><i class="fas fa-ruler-vertical"></i> القياسات الأساسية والطول</h4>
+            
+            <div class="space-y-5">
+              <!-- Lengths -->
+              <div>
+                <label class="measurement-label mb-2 block">الطول</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs text-slate-500 mb-1 block">طول أمام</label>
+                    <input type="number" step="0.1" id="m_frontLength" class="form-input" placeholder="0.0">
+                  </div>
+                  <div>
+                    <label class="text-xs text-slate-500 mb-1 block">طول خلف</label>
+                    <input type="number" step="0.1" id="m_backLength" class="form-input" placeholder="0.0">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hand -->
+              <div class="hand-section">
+                <label class="measurement-label mb-2 block">اليد</label>
+                <div class="flex gap-2 mb-3">
+                  <button type="button" onclick="selectHandType('plain')" class="hand-type-btn flex-1" id="hand_plain"><i class="fas fa-hand ml-1"></i> ساده</button>
+                  <button type="button" onclick="selectHandType('cuff')" class="hand-type-btn flex-1" id="hand_cuff"><i class="far fa-gem ml-1"></i> كبك</button>
+                </div>
+                <input type="hidden" id="m_handType" value="">
+                <div id="handMeasurementGroup" class="hidden">
+                  <label class="text-xs text-slate-500 mb-1 block">قياس اليد</label>
+                  <input type="number" step="0.1" id="m_handMeasure" class="form-input mb-3" placeholder="0.0">
+                  <div class="grid grid-cols-5 gap-2">
+                    <input type="number" step="0.1" id="m_hand1" class="form-input text-center" placeholder="1">
+                    <input type="number" step="0.1" id="m_hand2" class="form-input text-center" placeholder="2">
+                    <input type="number" step="0.1" id="m_hand3" class="form-input text-center" placeholder="3">
+                    <input type="number" step="0.1" id="m_hand4" class="form-input text-center" placeholder="4">
+                    <input type="number" step="0.1" id="m_hand5" class="form-input text-center" placeholder="5">
+                  </div>
+                  <p class="text-xs text-slate-400 mt-1.5">خمسة قياسات تابعة لنوع اليد</p>
+                </div>
+              </div>
+
+              <!-- Neck -->
+              <div>
+                <label class="measurement-label mb-2 block">الرقبة</label>
+                <input type="number" step="0.1" id="m_neckMeasure" class="form-input mb-3" placeholder="قياس الرقبة">
+                <label class="text-xs text-slate-500 mb-1.5 block">نوع الرقبة</label>
+                <div class="grid grid-cols-3 gap-2" id="neckTypeGroup">
+                  <button type="button" onclick="selectNeckType('qallabAdi')" class="neck-type-btn" id="neck_qallabAdi">قلاب عادي</button>
+                  <button type="button" onclick="selectNeckType('malaki')" class="neck-type-btn" id="neck_malaki">ملكي</button>
+                  <button type="button" onclick="selectNeckType('faransi')" class="neck-type-btn" id="neck_faransi">فرنسي</button>
+                  <button type="button" onclick="selectNeckType('sadaMadawar')" class="neck-type-btn" id="neck_sadaMadawar">سادة مدور</button>
+                  <button type="button" onclick="selectNeckType('sadaMurabba')" class="neck-type-btn col-span-2" id="neck_sadaMurabba">سادة مربع</button>
+                </div>
+                <input type="hidden" id="m_neckType" value="">
+              </div>
+
+              <!-- Width -->
+              <div class="pt-4 border-t border-slate-100">
+                <label class="measurement-label mb-2 block">الوسع</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs text-slate-500 mb-1 block">قياس الوسع</label>
+                    <input type="number" step="0.1" id="m_width" class="form-input" placeholder="0.0">
+                  </div>
+                  <div>
+                    <label class="text-xs text-slate-500 mb-1 block">نوع الثوب</label>
+                    <select id="m_dressType" class="form-input">
+                      <option value="">اختر نوع الثوب</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-1.5">يتم تحميل الأنواع من المخزون تلقائياً</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div id="orders" class="page">
+  <div class="flex justify-between items-center mb-5 gap-4 flex-wrap">
+    <button onclick="openOrderModal()" class="btn-primary"><i class="fas fa-plus"></i> طلب تفصيل جديد</button>
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="search-box">
+        <input type="text" id="orderSearch" placeholder="رقم الطلب، الاسم، الجوال..." class="form-input w-64" oninput="renderOrders()">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="flex gap-1.5 bg-white rounded-xl p-1 shadow-sm border border-slate-100">
+        <button onclick="filterOrders('all')" class="filter-btn active" data-filter="all">الكل</button>
+        <button onclick="filterOrders('new')" class="filter-btn" data-filter="new">جديد</button>
+        <button onclick="filterOrders('processing')" class="filter-btn" data-filter="processing">تحت التنفيذ</button>
+        <button onclick="filterOrders('ready')" class="filter-btn" data-filter="ready">جاهز</button>
+        <button onclick="filterOrders('delivered')" class="filter-btn" data-filter="delivered">تم التسليم</button>
+      </div>
+    </div>
+  </div>
+  <div class="card p-0 overflow-hidden">
+    <div id="ordersTable"></div>
+  </div>
+</div>
+
+<!-- INVENTORY -->
+<div id="inventory" class="page">
+  <div class="flex justify-between items-center mb-5">
+    <div class="flex gap-3">
+      <button onclick="openFabricModal()" class="btn-primary"><i class="fas fa-plus"></i> إضافة قماش</button>
+    </div>
+    <div class="flex gap-1 bg-white rounded-xl p-1.5 shadow-sm border border-slate-100">
+      <button onclick="switchInvTab('fabrics')" class="tab-btn active" id="tab-fabrics"><i class="fas fa-scroll ml-1"></i> الأقمشة</button>
+      <button onclick="switchInvTab('types')" class="tab-btn" id="tab-types"><i class="fas fa-shirt ml-1"></i> أنواع الثياب</button>
+      <button onclick="switchInvTab('colors')" class="tab-btn" id="tab-colors"><i class="fas fa-palette ml-1"></i> الألوان</button>
+      <button onclick="switchInvTab('accessories')" class="tab-btn" id="tab-accessories"><i class="fas fa-screwdriver-wrench ml-1"></i> المستلزمات</button>
+    </div>
+  </div>
+  <div class="card p-6">
+    <div id="inventoryContent"></div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div id="reports" class="page">
+  <div class="flex justify-between items-center mb-6">
+    <button onclick="exportReportPDF()" class="btn-primary"><i class="fas fa-file-pdf"></i> تصدير تقرير PDF</button>
+    <div class="flex gap-1 bg-white rounded-xl p-1.5 shadow-sm border border-slate-100">
+      <button onclick="setReportPeriod('today')" class="tab-btn" id="rep-today">اليوم</button>
+      <button onclick="setReportPeriod('week')" class="tab-btn" id="rep-week">هذا الأسبوع</button>
+      <button onclick="setReportPeriod('month')" class="tab-btn active" id="rep-month">هذا الشهر</button>
+      <button onclick="setReportPeriod('year')" class="tab-btn" id="rep-year">هذا العام</button>
+    </div>
+  </div>
+  <div class="grid grid-cols-5 gap-4 mb-6">
+    <div class="card p-5 text-center stat-card">
+      <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-3"><i class="fas fa-shopping-bag text-xl"></i></div>
+      <p class="text-slate-400 text-sm font-medium">إجمالي الطلبات</p>
+      <h3 class="text-2xl font-black mt-1" id="repTotalOrders">0</h3>
+    </div>
+    <div class="card p-5 text-center stat-card">
+      <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mx-auto mb-3"><i class="fas fa-sack-dollar text-xl"></i></div>
+      <p class="text-slate-400 text-sm font-medium">إجمالي الإيرادات</p>
+      <h3 class="text-xl font-black mt-1 text-emerald-600" id="repRevenue">0</h3>
+    </div>
+    <div class="card p-5 text-center stat-card">
+      <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-600 mx-auto mb-3"><i class="fas fa-box text-xl"></i></div>
+      <p class="text-slate-400 text-sm font-medium">تكاليف الأقمشة</p>
+      <h3 class="text-xl font-black mt-1 text-red-600" id="repCosts">0</h3>
+    </div>
+    <div class="card p-5 text-center stat-card">
+      <div class="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center text-violet-600 mx-auto mb-3"><i class="fas fa-chart-line text-xl"></i></div>
+      <p class="text-slate-400 text-sm font-medium">صافي الأرباح</p>
+      <h3 class="text-xl font-black mt-1 text-violet-600" id="repProfit">0</h3>
+    </div>
+    <div class="card p-5 text-center stat-card">
+      <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 mx-auto mb-3"><i class="fas fa-calculator text-xl"></i></div>
+      <p class="text-slate-400 text-sm font-medium">متوسط الطلب</p>
+      <h3 class="text-xl font-black mt-1" id="repAvg">0</h3>
+    </div>
+  </div>
+  <div class="card p-6">
+    <h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> الأقمشة الأكثر استخداماً</h3>
+    <div id="topFabrics"></div>
+  </div>
+</div>
+
+<!-- EMPLOYEES -->
+<div id="employees" class="page">
+  <div class="flex justify-between items-center mb-6">
+    <button onclick="openEmployeeModal()" class="btn-primary"><i class="fas fa-plus"></i> إضافة موظف جديد</button>
+    <div>
+      <h3 class="text-xl font-black">إدارة الموظفين</h3>
+      <p class="text-sm text-slate-400 mt-1">إضافة وتعديل وحذف حسابات الموظفين</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-3 gap-5 mb-6">
+    <div class="card p-6 text-center stat-card">
+      <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-4"><i class="fas fa-user text-2xl"></i></div>
+      <h3 class="text-4xl font-black" id="empCount">0</h3><p class="text-slate-400 mt-1">موظفون</p>
+    </div>
+    <div class="card p-6 text-center stat-card">
+      <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mx-auto mb-4"><i class="fas fa-shield-halved text-2xl"></i></div>
+      <h3 class="text-4xl font-black" id="adminCount">0</h3><p class="text-slate-400 mt-1">مديرون</p>
+    </div>
+    <div class="card p-6 text-center stat-card">
+      <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-4"><i class="fas fa-users text-2xl"></i></div>
+      <h3 class="text-4xl font-black" id="totalUsers">0</h3><p class="text-slate-400 mt-1">إجمالي الحسابات</p>
+    </div>
+  </div>
+  <div class="card p-6">
+    <h3 class="section-title"><i class="fas fa-users"></i> قائمة المستخدمين</h3>
+    <div id="employeesTable"></div>
+  </div>
+</div>
+</main>
+
+<!-- MODALS -->
+<!-- Customer Modal -->
+<div class="modal-overlay" id="customerModal">
+<div class="modal-content">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="customerModalTitle">إضافة عميل جديد</h3>
+<button onclick="closeModal('customerModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="customerForm" onsubmit="saveCustomer(event)">
+<input type="hidden" id="customerId">
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل <span class="text-red-500">*</span></label><input type="text" id="custName" class="form-input" required placeholder="مثال: علي بن مسعد الصيادي"></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">رقم الجوال <span class="text-red-500">*</span></label><input type="text" id="custPhone" class="form-input" required placeholder="مثال: 775292792"></div>
+</div>
+<div class="mb-6">
+<label class="block text-sm font-bold text-slate-700 mb-2">ملاحظات</label>
+<textarea id="custNotes" class="form-input" rows="2" placeholder="أي ملاحظات خاصة..."></textarea>
+</div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('customerModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ العميل</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+<div class="modal-content" style="max-width:820px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="orderModalTitle">طلب تفصيل جديد</h3>
+<button onclick="closeModal('orderModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="orderForm" onsubmit="saveOrder(event)">
+<input type="hidden" id="orderId">
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">العميل <span class="text-red-500">*</span></label><select id="orderCustomer" class="form-input" required><option value="">اختر العميل</option></select></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">نوع الثوب <span class="text-red-500">*</span></label><select id="orderType" class="form-input" required><option value="">اختر النوع</option></select></div>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-5">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">القماش <span class="text-red-500">*</span></label><select id="orderFabric" class="form-input" required onchange="updateOrderPrice()"><option value="">اختر القماش</option></select></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">اللون <span class="text-red-500">*</span></label><select id="orderColor" class="form-input" required><option value="">اختر اللون</option></select></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">تاريخ التسليم <span class="text-red-500">*</span></label><input type="date" id="orderDelivery" class="form-input" required></div>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-5">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">المبلغ الإجمالي <span class="text-red-500">*</span></label><input type="number" id="orderTotal" class="form-input" required oninput="calcRemaining()" placeholder="0"></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">العربون</label><input type="number" id="orderPaid" class="form-input" value="0" oninput="calcRemaining()" placeholder="0"></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">المتبقي</label><input type="text" id="orderRemaining" class="form-input bg-slate-50 font-bold text-slate-700" readonly></div>
+</div>
+<div class="mb-5">
+<label class="block text-sm font-bold text-slate-700 mb-2">الحالة</label>
+<select id="orderStatus" class="form-input">
+<option value="new">🆕 جديد</option>
+<option value="processing">⚙️ تحت التنفيذ</option>
+<option value="ready">📦 جاهز للاستلام</option>
+<option value="delivered">✅ تم التسليم</option>
+<option value="cancelled">❌ ملغي</option>
+</select>
+</div>
+<div class="mb-6">
+<label class="block text-sm font-bold text-slate-700 mb-2">ملاحظات الطلب</label>
+<textarea id="orderNotes" class="form-input" rows="2" placeholder="أي ملاحظات إضافية..."></textarea>
+</div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('orderModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ الطلب</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Fabric Modal -->
+<div class="modal-overlay" id="fabricModal">
+<div class="modal-content" style="max-width:520px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="fabricModalTitle">إضافة قماش</h3>
+<button onclick="closeModal('fabricModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="fabricForm" onsubmit="saveFabric(event)">
+<input type="hidden" id="fabricId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اسم القماش <span class="text-red-500">*</span></label><input type="text" id="fabName" class="form-input" required placeholder="مثال: سلك كوري فاخر"></div>
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اللون <span class="text-red-500">*</span></label><select id="fabColor" class="form-input" required><option value="">اختر اللون</option></select></div>
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">سعر الشراء / الوار</label><input type="number" step="0.01" id="fabBuy" class="form-input" value="0"></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">سعر البيع / الوار</label><input type="number" step="0.01" id="fabSell" class="form-input" value="0"></div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div><label class="block text-sm font-bold text-slate-700 mb-2">الكمية المتوفرة (وار)</label><input type="number" step="0.01" id="fabQty" class="form-input" value="0"></div>
+<div><label class="block text-sm font-bold text-slate-700 mb-2">حد الأمان (وار)</label><input type="number" step="0.01" id="fabMin" class="form-input" value="5"></div>
+</div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('fabricModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="employeeModal">
+<div class="modal-content" style="max-width:520px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="empModalTitle">إضافة موظف</h3>
+<button onclick="closeModal('employeeModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="employeeForm" onsubmit="saveEmployee(event)">
+<input type="hidden" id="empId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل <span class="text-red-500">*</span></label><input type="text" id="empName" class="form-input" required></div>
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اسم المستخدم <span class="text-red-500">*</span></label><input type="text" id="empUsername" class="form-input" required></div>
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">كلمة المرور <span class="text-red-500">*</span></label><input type="password" id="empPassword" class="form-input" required></div>
+<div class="mb-6">
+<label class="block text-sm font-bold text-slate-700 mb-2">الصلاحية</label>
+<select id="empRole" class="form-input">
+<option value="employee">👤 موظف</option>
+<option value="admin">👑 مدير</option>
+</select>
+</div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('employeeModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+<div class="modal-content" style="max-width:440px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900">تسجيل دفعة</h3>
+<button onclick="closeModal('paymentModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="paymentForm" onsubmit="savePayment(event)">
+<input type="hidden" id="paymentOrderId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">المبلغ المتبقي</label><input type="text" id="paymentRemaining" class="form-input bg-slate-50 font-bold text-lg text-slate-700" readonly></div>
+<div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-2">مبلغ الدفعة <span class="text-red-500">*</span></label><input type="number" id="paymentAmount" class="form-input" required placeholder="0"></div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('paymentModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-success"><i class="fas fa-check"></i> تسجيل الدفعة</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Accessory Modal -->
+<div class="modal-overlay" id="accessoryModal">
+<div class="modal-content" style="max-width:440px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="accModalTitle">إضافة مستلزم</h3>
+<button onclick="closeModal('accessoryModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="accessoryForm" onsubmit="saveAccessory(event)">
+<input type="hidden" id="accId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اسم المستلزم <span class="text-red-500">*</span></label><input type="text" id="accName" class="form-input" required placeholder="مثال: أزرار ثياب"></div>
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">الكمية <span class="text-red-500">*</span></label><input type="number" id="accQty" class="form-input" required value="0"></div>
+<div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-2">حد الأمان</label><input type="number" id="accMin" class="form-input" value="10"></div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('accessoryModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Dress Type Modal -->
+<div class="modal-overlay" id="dressTypeModal">
+<div class="modal-content" style="max-width:440px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="dtModalTitle">إضافة نوع ثوب</h3>
+<button onclick="closeModal('dressTypeModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="dressTypeForm" onsubmit="saveDressType(event)">
+<input type="hidden" id="dtId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اسم النوع <span class="text-red-500">*</span></label><input type="text" id="dtName" class="form-input" required placeholder="مثال: ثوب إماراتي"></div>
+<div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-2">السعر الافتراضي</label><input type="number" id="dtPrice" class="form-input" value="0" placeholder="0"></div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('dressTypeModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Color Modal -->
+<div class="modal-overlay" id="colorModal">
+<div class="modal-content" style="max-width:440px">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-black text-slate-900" id="colorModalTitle">إضافة لون</h3>
+<button onclick="closeModal('colorModal')" class="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition flex items-center justify-center"><i class="fas fa-times"></i></button>
+</div>
+<form id="colorForm" onsubmit="saveColor(event)">
+<input type="hidden" id="colorId">
+<div class="mb-5"><label class="block text-sm font-bold text-slate-700 mb-2">اسم اللون <span class="text-red-500">*</span></label><input type="text" id="colorName" class="form-input" required placeholder="مثال: كحلي"></div>
+<div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-2">كود اللون (HEX)</label><input type="color" id="colorCode" class="form-input h-12" value="#3b82f6"></div>
+<div class="flex justify-end gap-3">
+<button type="button" onclick="closeModal('colorModal')" class="btn-secondary">إلغاء</button>
+<button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Invoice Preview Modal -->
+<div class="modal-overlay" id="invoiceModal">
+<div class="modal-content" style="max-width:800px; max-height:90vh; overflow:auto;">
+<div class="flex justify-between items-center mb-4 no-print">
+<h3 class="text-xl font-black text-slate-900">معاينة الفاتورة</h3>
+<div class="flex gap-2">
+<button onclick="window.print()" class="btn-primary"><i class="fas fa-print"></i> طباعة</button>
+<button onclick="closeModal('invoiceModal')" class="btn-secondary">إغلاق</button>
+</div>
+</div>
+<div id="invoicePreview"></div>
+</div>
+</div>
+
+<!-- Action Dropdown -->
+<div id="actionDropdown" class="action-dropdown hidden">
+<button onclick="dropdownAction('view')"><i class="fas fa-eye"></i> عرض</button>
+<button onclick="dropdownAction('edit')"><i class="fas fa-edit"></i> تعديل</button>
+<button onclick="dropdownAction('print')"><i class="fas fa-file-pdf"></i> طباعة الفاتورة</button>
+<button onclick="dropdownAction('delete')" class="danger"><i class="fas fa-trash"></i> حذف</button>
+</div>
+
+<script src="js/database.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/measurements.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/orders.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/printing.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+document.addEventListener('click', (e)=>{
+  const dd = document.getElementById('actionDropdown');
+  if(!e.target.closest('.action-menu-btn') && !e.target.closest('#actionDropdown')) dd.classList.add('hidden');
+});
+</script>
+
+</body>
+</html>
