@@ -249,3 +249,236 @@ function renderMeasurementsSummary(m) {
     </div>
   </div>`;
 }
+
+// ==================== NEW PAGE: جدول القياسات — 3 Column Exact Layout ====================
+// All IDs with prefix mp_ belong to the new full-screen page #measurements
+// Pocket is included, neck is synced between CENTER and RIGHT
+
+// Extend default to include pocket
+if (!DEFAULT_MEASUREMENTS.pocket) DEFAULT_MEASUREMENTS.pocket = { type: '' };
+if (!DEFAULT_MEASUREMENTS.neck) DEFAULT_MEASUREMENTS.neck = { measurement: '', type: '' };
+
+function hasAnyMeasurementNew(m){
+  if(!m) return false;
+  return !(
+    !m.body?.shoulderSlope && !m.body?.hip && !m.body?.chest && !m.body?.step &&
+    !m.jabzor?.type && !m.jabzor?.shape && !m.jabzor?.clearance &&
+    !m.lengths?.front && !m.lengths?.back &&
+    !m.hand?.type && !m.hand?.measurement && !(m.hand?.extra||[]).some(x=>x) &&
+    !m.neck?.measurement && !m.neck?.type &&
+    !m.width?.measurement && !m.width?.dressTypeId &&
+    !m.pocket?.type
+  );
+}
+
+// Collect from new page
+function collectMeasurementsPage(){
+  return {
+    body: {
+      shoulderSlope: document.getElementById('mp_shoulderSlope')?.value.trim() || '',
+      hip: document.getElementById('mp_hip')?.value.trim() || '',
+      chest: document.getElementById('mp_chest')?.value.trim() || '',
+      step: document.getElementById('mp_step')?.value.trim() || ''
+    },
+    jabzor: {
+      type: document.getElementById('mp_jabzorType')?.value || '',
+      shape: document.getElementById('mp_jabzorShape')?.value || '',
+      clearance: document.getElementById('mp_clearance')?.value.trim() || ''
+    },
+    lengths: {
+      front: document.getElementById('mp_frontLength')?.value.trim() || '',
+      back: document.getElementById('mp_backLength')?.value.trim() || ''
+    },
+    hand: {
+      type: document.getElementById('mp_handType')?.value || '',
+      measurement: document.getElementById('mp_handMeasure')?.value.trim() || '',
+      extra: [
+        document.getElementById('mp_hand1')?.value.trim() || '',
+        document.getElementById('mp_hand2')?.value.trim() || '',
+        document.getElementById('mp_hand3')?.value.trim() || '',
+        document.getElementById('mp_hand4')?.value.trim() || '',
+        document.getElementById('mp_hand5')?.value.trim() || ''
+      ]
+    },
+    neck: {
+      measurement: document.getElementById('mp_neckMeasure')?.value.trim() || document.getElementById('mp_neckMeasureRight')?.value.trim() || '',
+      type: document.getElementById('mp_neckType')?.value || ''
+    },
+    width: {
+      measurement: document.getElementById('mp_width')?.value.trim() || '',
+      dressTypeId: document.getElementById('mp_dressType')?.value || '',
+      dressTypeName: document.getElementById('mp_dressType')?.selectedOptions[0]?.textContent?.replace('— اختر','').trim() || ''
+    },
+    pocket: {
+      type: document.getElementById('mp_pocket')?.value || ''
+    }
+  };
+}
+
+function fillMeasurementsPage(m){
+  const src = m || DEFAULT_MEASUREMENTS;
+  const set = (id, val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('mp_shoulderSlope', src.body?.shoulderSlope);
+  set('mp_hip', src.body?.hip);
+  set('mp_chest', src.body?.chest);
+  set('mp_step', src.body?.step);
+  selectMpJabzor(src.jabzor?.type || '', false);
+  selectMpJabzorShape(src.jabzor?.shape || '', false);
+  set('mp_clearance', src.jabzor?.clearance);
+  set('mp_frontLength', src.lengths?.front);
+  set('mp_backLength', src.lengths?.back);
+  selectMpHand(src.hand?.type || '', false);
+  set('mp_handMeasure', src.hand?.measurement);
+  const extra = src.hand?.extra || ['','','','',''];
+  for(let i=1;i<=5;i++) set('mp_hand'+i, extra[i-1]);
+  // neck - both fields synced
+  set('mp_neckMeasure', src.neck?.measurement);
+  set('mp_neckMeasureRight', src.neck?.measurement);
+  selectMpNeck(src.neck?.type || '', false);
+  set('mp_width', src.width?.measurement);
+  selectMpPocket(src.pocket?.type || '', false);
+  // dress type
+  if(src.width?.dressTypeId){
+    setTimeout(()=>{ const sel=document.getElementById('mp_dressType'); if(sel) sel.value=src.width.dressTypeId; }, 60);
+  } else {
+    const sel=document.getElementById('mp_dressType'); if(sel) sel.value='';
+  }
+}
+
+// Visual selectors for new page
+function selectMpJabzor(type){
+  const el=document.getElementById('mp_jabzorType'); if(el) el.value=type||'';
+  document.querySelectorAll('#mp_jabzorGrid .m-visual-card').forEach(c=> c.classList.toggle('active', c.dataset.value===type));
+}
+function selectMpJabzorShape(shape){
+  const el=document.getElementById('mp_jabzorShape'); if(el) el.value=shape||'';
+  document.querySelectorAll('#mp_jabzorShapeGrid .m-visual-card').forEach(c=> c.classList.toggle('active', c.dataset.value===shape));
+}
+function selectMpNeck(type){
+  const el=document.getElementById('mp_neckType'); if(el) el.value=type||'';
+  // Center visual cards
+  document.querySelectorAll('#mp_neckQallabGrid .m-visual-card, #mp_neckSadaGrid .m-visual-card').forEach(c=> c.classList.toggle('active', c.dataset.value===type));
+  // Right small buttons
+  document.querySelectorAll('#mp_neckRightGrid .neck-type-btn').forEach(b=> b.classList.toggle('active', b.dataset.value===type));
+}
+function syncNeckMeasure(val, fromRight=false){
+  const left=document.getElementById('mp_neckMeasure');
+  const right=document.getElementById('mp_neckMeasureRight');
+  if(fromRight){
+    if(left) left.value=val;
+  } else {
+    if(right) right.value=val;
+  }
+}
+function selectMpPocket(type){
+  const el=document.getElementById('mp_pocket'); if(el) el.value=type||'';
+  document.querySelectorAll('#mp_pocketGrid .m-visual-card').forEach(c=> c.classList.toggle('active', c.dataset.value===type));
+}
+function selectMpHand(type){
+  const el=document.getElementById('mp_handType'); if(el) el.value=type||'';
+  document.querySelectorAll('#mp_hand_plain, #mp_hand_cuff').forEach(b=> b.classList.remove('active'));
+  const target=document.getElementById('mp_hand_'+type); if(target) target.classList.add('active');
+  const group=document.getElementById('mp_handGroup');
+  if(type){ if(group) group.classList.remove('hidden'); } else { if(group) group.classList.add('hidden'); }
+}
+
+// Populate selects for new page
+async function populateMpDressTypes(){
+  const sel=document.getElementById('mp_dressType');
+  if(!sel) return;
+  const types=await getAll('dressTypes');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— اختر نوع الثوب</option>'+types.map(t=> `<option value="${t.id}">${t.name}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+async function populateMeasurementsCustomerSelect(){
+  const sel=document.getElementById('measurementsCustomerSelect');
+  if(!sel) return;
+  const customers=await getAll('customers');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">اختر العميل</option>'+customers.map(c=> `<option value="${c.id}">${c.name} — ${c.phone}</option>`).join('');
+  if(cur) sel.value=cur;
+  // also populate top bar if needed
+}
+
+// Render the new measurements page
+async function renderMeasurementsPage(){
+  await populateMeasurementsCustomerSelect();
+  await populateMpDressTypes();
+  // if a customer is already selected, load it, otherwise try selectedCustomerId
+  const sel=document.getElementById('measurementsCustomerSelect');
+  let cid = sel?.value ? parseInt(sel.value) : selectedCustomerId;
+  if(cid){
+    if(sel) sel.value=cid;
+    const c=await getById('customers', cid);
+    if(c) fillMeasurementsPage(c.measurements || DEFAULT_MEASUREMENTS);
+  } else {
+    fillMeasurementsPage(DEFAULT_MEASUREMENTS);
+  }
+}
+
+async function loadMeasurementsForSelectedCustomer(){
+  const sel=document.getElementById('measurementsCustomerSelect');
+  const cid=sel?.value ? parseInt(sel.value) : null;
+  if(!cid){
+    fillMeasurementsPage(DEFAULT_MEASUREMENTS);
+    return;
+  }
+  selectedCustomerId=cid;
+  const c=await getById('customers', cid);
+  if(c) fillMeasurementsPage(c.measurements || DEFAULT_MEASUREMENTS);
+  // also update customers page selection
+  renderCustomers();
+}
+
+async function saveMeasurementsPage(){
+  const sel=document.getElementById('measurementsCustomerSelect');
+  const cid=sel?.value ? parseInt(sel.value) : selectedCustomerId;
+  if(!cid){
+    showToast('اختر العميل أولاً','error');
+    if(sel) sel.focus();
+    return;
+  }
+  const customer=await getById('customers', cid);
+  if(!customer){ showToast('العميل غير موجود','error'); return; }
+  const m=collectMeasurementsPage();
+  // ensure dressTypeName
+  const dtSel=document.getElementById('mp_dressType');
+  if(dtSel) m.width.dressTypeName = m.width.dressTypeId ? (dtSel.selectedOptions[0]?.textContent.trim()||'') : '';
+  // Basic validation: at least one red field should be filled? Not required, just warn if all empty
+  if(!hasAnyMeasurementNew(m)){
+    if(!confirm('لم تدخل أي قياس، هل تريد الحفظ فارغاً؟')) return;
+  }
+  customer.measurements=m;
+  // also sync to old structure for backward compatibility (copy to same object)
+  // old workspace uses same measurements object, so it will be synced automatically
+  await putData('customers', customer);
+  showToast('تم حفظ جدول القياسات');
+  renderCustomers();
+  if(selectedCustomerId===cid) renderCustomerDetail(customer);
+}
+
+// Helper to open measurements page for a specific customer from customers detail
+async function openMeasurementsPageForCustomer(cid){
+  selectedCustomerId=cid;
+  showPage('measurements');
+  // wait for page to render
+  setTimeout(async ()=>{
+    const sel=document.getElementById('measurementsCustomerSelect');
+    if(sel) sel.value=cid;
+    const c=await getById('customers', cid);
+    if(c) fillMeasurementsPage(c.measurements || DEFAULT_MEASUREMENTS);
+  }, 100);
+}
+
+// Make old workspace open redirect to new page (to satisfy no-modal requirement)
+const _oldOpenWorkspace = typeof openMeasurementsWorkspace==='function' ? openMeasurementsWorkspace : null;
+async function openMeasurementsWorkspaceCompat(cid){
+  // Redirect to new page instead of modal
+  return openMeasurementsPageForCustomer(cid);
+}
+if(typeof openMeasurementsWorkspace!=='undefined'){
+  // Override to use new page
+  openMeasurementsWorkspace = openMeasurementsPageForCustomer;
+}
+

@@ -16,6 +16,7 @@ function showPage(pageId){
   const titles={
     dashboard:'لوحة التحكم',
     customers:'العملاء والمقاسات',
+    measurements:'جدول القياسات',
     orders:'الطلبات والفواتير',
     inventory:'المخزون',
     reports:'التقارير والأرباح'
@@ -23,6 +24,7 @@ function showPage(pageId){
   const subtitles={
     dashboard:'نظرة شاملة على أداء المحل',
     customers:'إدارة بيانات العملاء وقياساتهم الجديدة',
+    measurements:'القياسات التفصيلية — 3 أعمدة: الجسم / الرسومات / الأساسية',
     orders:'متابعة طلبات التفصيل وإدارة المدفوعات',
     inventory:'تتبع كميات الأقمشة وأنواع الثياب والألوان',
     reports:'تحليل أداء المحل والمبيعات والأرباح'
@@ -35,6 +37,7 @@ function showPage(pageId){
   // render
   if(pageId==='dashboard') renderDashboard();
   if(pageId==='customers') renderCustomers();
+  if(pageId==='measurements') { renderMeasurementsPage(); }
   if(pageId==='orders') renderOrders();
   if(pageId==='inventory') renderInventory();
   if(pageId==='reports') renderReports();

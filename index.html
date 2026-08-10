@@ -10,7 +10,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 <div id="toast" class="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
@@ -34,6 +34,9 @@
 </div>
 <div onclick="showPage('customers')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-customers">
 <i class="fas fa-users"></i><span class="font-medium">العملاء والمقاسات</span>
+</div>
+<div onclick="showPage('measurements')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-measurements">
+<i class="fas fa-ruler-combined"></i><span class="font-medium">جدول القياسات</span>
 </div>
 <div onclick="showPage('orders')" class="nav-item px-4 py-3 rounded-xl flex items-center gap-3 mb-1" id="nav-orders">
 <i class="fas fa-receipt"></i><span class="font-medium">الطلبات والفواتير</span>
@@ -215,198 +218,224 @@
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Measurements Workspace - Full Screen Large Workspace -->
-  <div id="measurementsWorkspace" class="measurements-workspace hidden">
-    <div class="measurements-header">
-      <div class="flex items-center gap-4">
-        <button onclick="closeMeasurementsWorkspace()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition"><i class="fas fa-arrow-right"></i></button>
-        <div>
-          <h3 class="text-xl font-black text-slate-900 flex items-center gap-2"><i class="fas fa-ruler-combined text-blue-600"></i> القياسات الأساسية</h3>
-          <p class="text-sm text-slate-400" id="measurementsCustomerName">—</p>
-        </div>
+<!-- ORDERS -->
+
+<!-- MEASUREMENTS PAGE — Full Screen 3-Column Layout -->
+<div id="measurements" class="page">
+  <div class="measurements-page-top">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow"><i class="fas fa-table"></i></div>
+      <div>
+        <h2 class="text-2xl font-black text-slate-900">جدول القياسات</h2>
+        <p class="text-sm text-slate-500">قياسات مفصلة لكل عميل — 3 أعمدة واضحة</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button onclick="closeMeasurementsWorkspace()" class="btn-secondary">إلغاء</button>
-        <button onclick="saveMeasurementsWorkspace()" class="btn-primary"><i class="fas fa-save"></i> حفظ القياسات</button>
+    </div>
+    <div class="flex items-center gap-3">
+      <select id="measurementsCustomerSelect" class="form-input w-64" onchange="loadMeasurementsForSelectedCustomer()">
+        <option value="">اختر العميل</option>
+      </select>
+      <button onclick="saveMeasurementsPage()" class="btn-primary"><i class="fas fa-save"></i> حفظ القياسات</button>
+    </div>
+  </div>
+
+  <div id="measurementsPageBody" class="measurements-grid-new">
+    <!-- LEFT: قياسات الجسم -->
+    <div class="m-col m-col-left">
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-person"></i> قياسات الجسم</h3>
+        <div class="m-field m-field-red">
+          <label>ميلان الكتف <span class="m-dot">🔴</span></label>
+          <input type="number" step="0.1" id="mp_shoulderSlope" class="form-input m-input-red" placeholder="0.0">
+        </div>
+        <div class="m-field m-field-red">
+          <label>الورك <span class="m-dot">🔴</span></label>
+          <input type="number" step="0.1" id="mp_hip" class="form-input m-input-red" placeholder="0.0">
+        </div>
+        <div class="m-field m-field-red">
+          <label>الصدر <span class="m-dot">🔴</span></label>
+          <input type="number" step="0.1" id="mp_chest" class="form-input m-input-red" placeholder="0.0">
+        </div>
+        <div class="m-field m-field-step">
+          <label>الخطوة</label>
+          <input type="number" step="0.1" id="mp_step" class="form-input" placeholder="0.0">
+        </div>
       </div>
     </div>
 
-    <div class="measurements-body">
-      <!-- Header info bar -->
-      <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl" id="mWorkspaceInitial">؟</div>
-          <div>
-            <div class="font-black text-slate-900" id="mWorkspaceName">—</div>
-            <div class="text-sm text-slate-500" id="mWorkspacePhone">—</div>
-          </div>
+    <!-- CENTER: الرسومات والتفاصيل -->
+    <div class="m-col m-col-center">
+      <!-- الجبزور -->
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-shirt"></i> الجبزور</h3>
+        <div class="m-visual-grid-3" id="mp_jabzorGrid">
+          <button type="button" class="m-visual-card" data-value="zip" onclick="selectMpJabzor('zip')">
+            <div class="m-svg-wrap">
+              <svg viewBox="0 0 80 60" class="m-svg"><rect x="38" y="5" width="4" height="50" rx="2" fill="#334155"/><circle cx="40" cy="8" r="6" fill="#64748b"/><rect x="32" y="18" width="16" height="8" rx="2" fill="#94a3b8"/><rect x="32" y="30" width="16" height="8" rx="2" fill="#94a3b8"/><rect x="32" y="42" width="16" height="8" rx="2" fill="#94a3b8"/></svg>
+            </div>
+            <span>سحاب</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="buttonVisible" onclick="selectMpJabzor('buttonVisible')">
+            <div class="m-svg-wrap">
+              <svg viewBox="0 0 80 60" class="m-svg"><rect x="10" y="5" width="60" height="50" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="2"/><circle cx="40" cy="18" r="6" fill="#334155"/><circle cx="40" cy="30" r="6" fill="#334155"/><circle cx="40" cy="42" r="6" fill="#334155"/><circle cx="40" cy="18" r="2" fill="white"/><circle cx="40" cy="30" r="2" fill="white"/><circle cx="40" cy="42" r="2" fill="white"/></svg>
+            </div>
+            <span>زرار باين</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="buttonHidden" onclick="selectMpJabzor('buttonHidden')">
+            <div class="m-svg-wrap">
+              <svg viewBox="0 0 80 60" class="m-svg"><rect x="10" y="5" width="60" height="50" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 4"/><line x1="40" y1="5" x2="40" y2="55" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 4"/><circle cx="40" cy="18" r="5" fill="white" stroke="#94a3b8" stroke-width="1.5"/><circle cx="40" cy="30" r="5" fill="white" stroke="#94a3b8" stroke-width="1.5"/><circle cx="40" cy="42" r="5" fill="white" stroke="#94a3b8" stroke-width="1.5"/></svg>
+            </div>
+            <span>زرار مخفي</span>
+          </button>
         </div>
-        <div class="text-xs text-slate-400">جميع القياسات بالسنتيمتر • الحقول الحمراء أساسية</div>
+        <input type="hidden" id="mp_jabzorType" value="">
       </div>
 
-      <!-- Three columns layout -->
-      <div class="measurements-grid">
-
-        <!-- Left: Body measurements -->
-        <div class="measurements-col">
-          <div class="measurements-section">
-            <h4 class="measurements-section-title"><i class="fas fa-person"></i> قياسات الجسم</h4>
-            <div class="space-y-4">
-              <div>
-                <label class="measurement-label measurement-label-red">ميلان الكتف <span class="text-red-500">•</span></label>
-                <input type="number" step="0.1" id="m_shoulderSlope" class="form-input measurement-input-red" placeholder="0.0">
-              </div>
-              <div>
-                <label class="measurement-label measurement-label-red">الورك <span class="text-red-500">•</span></label>
-                <input type="number" step="0.1" id="m_hip" class="form-input measurement-input-red" placeholder="0.0">
-              </div>
-              <div>
-                <label class="measurement-label measurement-label-red">الصدر <span class="text-red-500">•</span></label>
-                <input type="number" step="0.1" id="m_chest" class="form-input measurement-input-red" placeholder="0.0">
-              </div>
-              <div class="pt-3 border-t border-slate-100">
-                <label class="measurement-label">الخطوة</label>
-                <input type="number" step="0.1" id="m_step" class="form-input" placeholder="0.0">
-              </div>
+      <!-- شكل الجبزور -->
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-shapes"></i> شكل الجبزور</h3>
+        <div class="m-visual-grid-2" id="mp_jabzorShapeGrid">
+          <button type="button" class="m-visual-card" data-value="square" onclick="selectMpJabzorShape('square')">
+            <div class="m-svg-wrap">
+              <svg viewBox="0 0 80 60" class="m-svg"><rect x="20" y="10" width="40" height="40" rx="4" fill="white" stroke="#334155" stroke-width="2.5"/></svg>
             </div>
+            <span>مربع</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="triangle" onclick="selectMpJabzorShape('triangle')">
+            <div class="m-svg-wrap">
+              <svg viewBox="0 0 80 60" class="m-svg"><path d="M40 10 L65 50 L15 50 Z" fill="white" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/></svg>
+            </div>
+            <span>مثلث</span>
+          </button>
+        </div>
+        <input type="hidden" id="mp_jabzorShape" value="">
+      </div>
+
+      <!-- التخاليص -->
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-arrows-left-right"></i> التخاليص</h3>
+        <label class="m-field-label">قياس التخاليص <span class="text-slate-400 font-normal text-xs">(مستقل عن الجبزور)</span></label>
+        <input type="number" step="0.1" id="mp_clearance" class="form-input mt-2" placeholder="0.0">
+      </div>
+
+      <!-- الرقبة -->
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-user-tie"></i> الرقبة</h3>
+        <p class="text-xs font-bold text-slate-600 mb-2">قلاب</p>
+        <div class="m-visual-grid-3" id="mp_neckQallabGrid">
+          <button type="button" class="m-visual-card" data-value="qallabAdi" onclick="selectMpNeck('qallabAdi')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 50" class="m-svg"><path d="M10 20 Q40 5 70 20 L70 35 Q40 25 10 35 Z" fill="white" stroke="#334155" stroke-width="2"/></svg></div>
+            <span>قلاب عادي</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="malaki" onclick="selectMpNeck('malaki')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 50" class="m-svg"><path d="M10 18 Q40 2 70 18 L60 32 Q40 22 20 32 Z" fill="white" stroke="#334155" stroke-width="2"/><circle cx="40" cy="38" r="3" fill="#334155"/></svg></div>
+            <span>ملكي</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="faransi" onclick="selectMpNeck('faransi')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 50" class="m-svg"><path d="M15 25 L15 15 L25 15 L25 35 L15 35 Z" fill="white" stroke="#334155" stroke-width="2"/><path d="M55 15 L65 15 L65 35 L55 35 Z" fill="white" stroke="#334155" stroke-width="2"/><line x1="25" y1="25" x2="55" y2="25" stroke="#334155" stroke-width="1.5"/></svg></div>
+            <span>فرنسي</span>
+          </button>
+        </div>
+        <p class="text-xs font-bold text-slate-600 mt-3 mb-2">سادة</p>
+        <div class="m-visual-grid-2" id="mp_neckSadaGrid">
+          <button type="button" class="m-visual-card" data-value="sadaMadawar" onclick="selectMpNeck('sadaMadawar')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 50" class="m-svg"><ellipse cx="40" cy="25" rx="28" ry="16" fill="white" stroke="#334155" stroke-width="2"/></svg></div>
+            <span>سادة مدور</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="sadaMurabba" onclick="selectMpNeck('sadaMurabba')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 50" class="m-svg"><rect x="12" y="12" width="56" height="26" rx="2" fill="white" stroke="#334155" stroke-width="2"/></svg></div>
+            <span>سادة مربع</span>
+          </button>
+        </div>
+        <input type="hidden" id="mp_neckType" value="">
+        <div class="mt-3">
+          <label class="m-field-label">قياس الرقبة</label>
+          <input type="number" step="0.1" id="mp_neckMeasure" class="form-input mt-1" placeholder="0.0" oninput="syncNeckMeasure(this.value)">
+        </div>
+      </div>
+
+      <!-- الجيب -->
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-bag-shopping"></i> الجيب</h3>
+        <div class="m-visual-grid-3" id="mp_pocketGrid">
+          <button type="button" class="m-visual-card" data-value="side" onclick="selectMpPocket('side')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 60" class="m-svg"><rect x="15" y="10" width="50" height="40" rx="3" fill="#f8fafc" stroke="#334155" stroke-width="2"/><rect x="25" y="18" width="30" height="18" rx="2" fill="white" stroke="#94a3b8" stroke-width="1.5"/></svg></div>
+            <span>جيب جانبي</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="hidden" onclick="selectMpPocket('hidden')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 60" class="m-svg"><rect x="15" y="10" width="50" height="40" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5 3"/><rect x="25" y="18" width="30" height="18" rx="2" fill="white" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/></svg></div>
+            <span>جيب مخفي</span>
+          </button>
+          <button type="button" class="m-visual-card" data-value="none" onclick="selectMpPocket('none')">
+            <div class="m-svg-wrap"><svg viewBox="0 0 80 60" class="m-svg"><rect x="15" y="10" width="50" height="40" rx="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/><line x1="20" y1="20" x2="60" y2="40" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/><line x1="60" y1="20" x2="20" y2="40" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span>بدون جيب</span>
+          </button>
+        </div>
+        <input type="hidden" id="mp_pocket" value="">
+      </div>
+    </div>
+
+    <!-- RIGHT: القياسات الأساسية -->
+    <div class="m-col m-col-right">
+      <div class="m-section">
+        <h3 class="m-section-title"><i class="fas fa-ruler-vertical"></i> القياسات الأساسية</h3>
+        <div class="m-field">
+          <label class="m-field-label">طول أمام</label>
+          <input type="number" step="0.1" id="mp_frontLength" class="form-input" placeholder="0.0">
+        </div>
+        <div class="m-field">
+          <label class="m-field-label">طول خلف</label>
+          <input type="number" step="0.1" id="mp_backLength" class="form-input" placeholder="0.0">
+        </div>
+
+        <div class="m-field-group">
+          <label class="m-field-label">اليد</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="hand-type-btn flex-1" id="mp_hand_plain" onclick="selectMpHand('plain')"><i class="fas fa-hand ml-1"></i> ساده</button>
+            <button type="button" class="hand-type-btn flex-1" id="mp_hand_cuff" onclick="selectMpHand('cuff')"><i class="far fa-gem ml-1"></i> كبك</button>
+          </div>
+          <input type="hidden" id="mp_handType" value="">
+          <div id="mp_handGroup" class="hidden">
+            <label class="text-xs text-slate-500 mb-1 block">قياس اليد</label>
+            <input type="number" step="0.1" id="mp_handMeasure" class="form-input mb-2" placeholder="0.0">
+            <div class="grid grid-cols-5 gap-2">
+              <input type="number" step="0.1" id="mp_hand1" class="form-input text-center" placeholder="1">
+              <input type="number" step="0.1" id="mp_hand2" class="form-input text-center" placeholder="2">
+              <input type="number" step="0.1" id="mp_hand3" class="form-input text-center" placeholder="3">
+              <input type="number" step="0.1" id="mp_hand4" class="form-input text-center" placeholder="4">
+              <input type="number" step="0.1" id="mp_hand5" class="form-input text-center" placeholder="5">
+            </div>
+            <p class="text-xs text-slate-400 mt-1">خمسة قياسات بدون أسماء</p>
           </div>
         </div>
 
-        <!-- Middle: Jabzor + shapes + clearance -->
-        <div class="measurements-col">
-          <div class="measurements-section">
-            <h4 class="measurements-section-title"><i class="fas fa-shirt"></i> الجبزور</h4>
-            <div class="space-y-5">
-              <div>
-                <label class="measurement-label mb-2 block">نوع الجبزور</label>
-                <div class="grid grid-cols-3 gap-2" id="jabzorTypeGroup">
-                  <button type="button" data-value="zip" onclick="selectJabzorType('zip')" class="jabzor-type-btn" id="jabzor_zip">
-                    <i class="fas fa-bars"></i>
-                    <span>سحاب</span>
-                  </button>
-                  <button type="button" data-value="buttonVisible" onclick="selectJabzorType('buttonVisible')" class="jabzor-type-btn" id="jabzor_buttonVisible">
-                    <i class="fas fa-circle-dot"></i>
-                    <span>زرار باين</span>
-                  </button>
-                  <button type="button" data-value="buttonHidden" onclick="selectJabzorType('buttonHidden')" class="jabzor-type-btn" id="jabzor_buttonHidden">
-                    <i class="far fa-circle"></i>
-                    <span>زرار مخفي</span>
-                  </button>
-                </div>
-                <input type="hidden" id="m_jabzorType" value="">
-              </div>
-
-              <div>
-                <label class="measurement-label mb-2 block">شكل الجبزور</label>
-                <div class="grid grid-cols-2 gap-3">
-                  <button type="button" onclick="selectJabzorShape('square')" class="jabzor-shape-btn" id="jabzor_shape_square">
-                    <div class="shape-preview shape-square"></div>
-                    <span>مربع</span>
-                  </button>
-                  <button type="button" onclick="selectJabzorShape('triangle')" class="jabzor-shape-btn" id="jabzor_shape_triangle">
-                    <div class="shape-preview shape-triangle"></div>
-                    <span>مثلث</span>
-                  </button>
-                </div>
-                <input type="hidden" id="m_jabzorShape" value="">
-              </div>
-
-              <div class="pt-4 border-t border-slate-200">
-                <label class="measurement-label">التخاليص <span class="text-slate-400 font-normal text-xs">(قياس مستقل)</span></label>
-                <input type="number" step="0.1" id="m_clearance" class="form-input mt-2" placeholder="0.0">
-                <p class="text-xs text-slate-400 mt-1.5">قياس التخاليص منفصل عن الجبزور</p>
-              </div>
-            </div>
+        <div class="m-field">
+          <label class="m-field-label">الرقبة — قياس</label>
+          <input type="number" step="0.1" id="mp_neckMeasureRight" class="form-input" placeholder="0.0" oninput="syncNeckMeasure(this.value, true)">
+          <div class="mt-2 flex flex-wrap gap-1.5" id="mp_neckRightGrid">
+            <button type="button" class="neck-type-btn text-xs" data-value="qallabAdi" onclick="selectMpNeck('qallabAdi')">قلاب عادي</button>
+            <button type="button" class="neck-type-btn text-xs" data-value="malaki" onclick="selectMpNeck('malaki')">ملكي</button>
+            <button type="button" class="neck-type-btn text-xs" data-value="faransi" onclick="selectMpNeck('faransi')">فرنسي</button>
+            <button type="button" class="neck-type-btn text-xs" data-value="sadaMadawar" onclick="selectMpNeck('sadaMadawar')">سادة مدور</button>
+            <button type="button" class="neck-type-btn text-xs" data-value="sadaMurabba" onclick="selectMpNeck('sadaMurabba')">سادة مربع</button>
           </div>
         </div>
 
-        <!-- Right: Lengths + Hand + Neck + Width -->
-        <div class="measurements-col">
-          <div class="measurements-section">
-            <h4 class="measurements-section-title"><i class="fas fa-ruler-vertical"></i> القياسات الأساسية والطول</h4>
-            
-            <div class="space-y-5">
-              <!-- Lengths -->
-              <div>
-                <label class="measurement-label mb-2 block">الطول</label>
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-xs text-slate-500 mb-1 block">طول أمام</label>
-                    <input type="number" step="0.1" id="m_frontLength" class="form-input" placeholder="0.0">
-                  </div>
-                  <div>
-                    <label class="text-xs text-slate-500 mb-1 block">طول خلف</label>
-                    <input type="number" step="0.1" id="m_backLength" class="form-input" placeholder="0.0">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Hand -->
-              <div class="hand-section">
-                <label class="measurement-label mb-2 block">اليد</label>
-                <div class="flex gap-2 mb-3">
-                  <button type="button" onclick="selectHandType('plain')" class="hand-type-btn flex-1" id="hand_plain"><i class="fas fa-hand ml-1"></i> ساده</button>
-                  <button type="button" onclick="selectHandType('cuff')" class="hand-type-btn flex-1" id="hand_cuff"><i class="far fa-gem ml-1"></i> كبك</button>
-                </div>
-                <input type="hidden" id="m_handType" value="">
-                <div id="handMeasurementGroup" class="hidden">
-                  <label class="text-xs text-slate-500 mb-1 block">قياس اليد</label>
-                  <input type="number" step="0.1" id="m_handMeasure" class="form-input mb-3" placeholder="0.0">
-                  <div class="grid grid-cols-5 gap-2">
-                    <input type="number" step="0.1" id="m_hand1" class="form-input text-center" placeholder="1">
-                    <input type="number" step="0.1" id="m_hand2" class="form-input text-center" placeholder="2">
-                    <input type="number" step="0.1" id="m_hand3" class="form-input text-center" placeholder="3">
-                    <input type="number" step="0.1" id="m_hand4" class="form-input text-center" placeholder="4">
-                    <input type="number" step="0.1" id="m_hand5" class="form-input text-center" placeholder="5">
-                  </div>
-                  <p class="text-xs text-slate-400 mt-1.5">خمسة قياسات تابعة لنوع اليد</p>
-                </div>
-              </div>
-
-              <!-- Neck -->
-              <div>
-                <label class="measurement-label mb-2 block">الرقبة</label>
-                <input type="number" step="0.1" id="m_neckMeasure" class="form-input mb-3" placeholder="قياس الرقبة">
-                <label class="text-xs text-slate-500 mb-1.5 block">نوع الرقبة</label>
-                <div class="grid grid-cols-3 gap-2" id="neckTypeGroup">
-                  <button type="button" onclick="selectNeckType('qallabAdi')" class="neck-type-btn" id="neck_qallabAdi">قلاب عادي</button>
-                  <button type="button" onclick="selectNeckType('malaki')" class="neck-type-btn" id="neck_malaki">ملكي</button>
-                  <button type="button" onclick="selectNeckType('faransi')" class="neck-type-btn" id="neck_faransi">فرنسي</button>
-                  <button type="button" onclick="selectNeckType('sadaMadawar')" class="neck-type-btn" id="neck_sadaMadawar">سادة مدور</button>
-                  <button type="button" onclick="selectNeckType('sadaMurabba')" class="neck-type-btn col-span-2" id="neck_sadaMurabba">سادة مربع</button>
-                </div>
-                <input type="hidden" id="m_neckType" value="">
-              </div>
-
-              <!-- Width -->
-              <div class="pt-4 border-t border-slate-100">
-                <label class="measurement-label mb-2 block">الوسع</label>
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="text-xs text-slate-500 mb-1 block">قياس الوسع</label>
-                    <input type="number" step="0.1" id="m_width" class="form-input" placeholder="0.0">
-                  </div>
-                  <div>
-                    <label class="text-xs text-slate-500 mb-1 block">نوع الثوب</label>
-                    <select id="m_dressType" class="form-input">
-                      <option value="">اختر نوع الثوب</option>
-                    </select>
-                  </div>
-                </div>
-                <p class="text-xs text-slate-400 mt-1.5">يتم تحميل الأنواع من المخزون تلقائياً</p>
-              </div>
-
-            </div>
-          </div>
+        <div class="m-field">
+          <label class="m-field-label">الوسع</label>
+          <input type="number" step="0.1" id="mp_width" class="form-input" placeholder="0.0">
         </div>
-
+        <div class="m-field">
+          <label class="m-field-label">نوع الثوب</label>
+          <select id="mp_dressType" class="form-input"></select>
+          <p class="text-xs text-slate-400 mt-1">من المخزون الحالي</p>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ORDERS -->
 <div id="orders" class="page">
   <div class="flex justify-between items-center mb-5 gap-4 flex-wrap">
     <button onclick="openOrderModal()" class="btn-primary"><i class="fas fa-plus"></i> طلب تفصيل جديد</button>
@@ -690,18 +719,18 @@
 <button onclick="dropdownAction('delete')" class="danger"><i class="fas fa-trash"></i> حذف</button>
 </div>
 
-<script src="js/database.js?v=12"></script>
-<script src="js/utils.js?v=12"></script>
-<script src="js/navigation.js?v=12"></script>
-<script src="js/dashboard.js?v=12"></script>
-<script src="js/measurements.js?v=12"></script>
-<script src="js/customers.js?v=12"></script>
-<script src="js/orders.js?v=12"></script>
-<script src="js/inventory.js?v=12"></script>
-<script src="js/reports.js?v=12"></script>
-<script src="js/printing.js?v=12"></script>
-<script src="js/backup.js?v=12"></script>
-<script src="js/app.js?v=12"></script>
+<script src="js/database.js?v=13"></script>
+<script src="js/utils.js?v=13"></script>
+<script src="js/navigation.js?v=13"></script>
+<script src="js/dashboard.js?v=13"></script>
+<script src="js/measurements.js?v=13"></script>
+<script src="js/customers.js?v=13"></script>
+<script src="js/orders.js?v=13"></script>
+<script src="js/inventory.js?v=13"></script>
+<script src="js/reports.js?v=13"></script>
+<script src="js/printing.js?v=13"></script>
+<script src="js/backup.js?v=13"></script>
+<script src="js/app.js?v=13"></script>
 
 <script>
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
