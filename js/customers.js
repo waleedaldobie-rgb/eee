@@ -137,41 +137,54 @@ async function editCustomer(id){
   openModal('customerModal');
 }
 async function saveCustomer(e){
-  e.preventDefault();
-  const id=document.getElementById('customerId').value;
-  const name=document.getElementById('custName').value.trim();
-  const phone=document.getElementById('custPhone').value.trim();
-  if(!name || !phone){
-    showToast('الاسم والجوال مطلوبان','error');
-    return;
-  }
-  const data={name, phone, notes:document.getElementById('custNotes').value.trim(), createdAt:new Date().toISOString()};
-  // preserve measurements if editing
-  if(id){
-    const existing = await getById('customers', parseInt(id));
-    if(existing?.measurements) data.measurements = existing.measurements;
-    if(existing?.createdAt) data.createdAt = existing.createdAt;
-    data.id=parseInt(id);
-    await putData('customers',data);
-    showToast('تم تحديث بيانات العميل');
-    selectedCustomerId = parseInt(id);
-    closeModal('customerModal');
-    await renderCustomers();
-    renderDashboard();
-    // بعد التعديل، ابقى في التفاصيل واعرض القياسات
-    const updated = await getById('customers', parseInt(id));
-    if(updated) renderCustomerDetail(updated);
-  } else {
-    const newId = await addData('customers',data);
-    selectedCustomerId = newId;
-    closeModal('customerModal');
-    await renderCustomers();
-    renderDashboard();
-    showToast('تم إضافة العميل — الآن أدخل قياساته','success');
-    // افتح جدول القياسات تلقائياً للعميل الجديد
-    setTimeout(async ()=>{
-      await openMeasurementsWorkspace(newId);
-    }, 300);
+  if(e) e.preventDefault();
+  try{
+    const idEl=document.getElementById('customerId');
+    const nameEl=document.getElementById('custName');
+    const phoneEl=document.getElementById('custPhone');
+    const notesEl=document.getElementById('custNotes');
+    if(!idEl || !nameEl || !phoneEl){
+      showToast('خطأ في النموذج','error');
+      return;
+    }
+    const id=idEl.value.trim();
+    const name=nameEl.value.trim();
+    const phone=phoneEl.value.trim();
+    if(!name || !phone){
+      showToast('الاسم والجوال مطلوبان','error');
+      if(!name) nameEl.focus();
+      else phoneEl.focus();
+      return;
+    }
+    const data={name, phone, notes: notesEl?notesEl.value.trim():'', createdAt:new Date().toISOString()};
+    if(id){
+      const existing = await getById('customers', parseInt(id));
+      if(existing?.measurements) data.measurements = existing.measurements;
+      if(existing?.createdAt) data.createdAt = existing.createdAt;
+      data.id=parseInt(id);
+      await putData('customers',data);
+      showToast('تم تحديث بيانات العميل');
+      selectedCustomerId = parseInt(id);
+      closeModal('customerModal');
+      await renderCustomers();
+      renderDashboard();
+      const updated = await getById('customers', parseInt(id));
+      if(updated) renderCustomerDetail(updated);
+    } else {
+      const newId = await addData('customers',data);
+      if(!newId && newId!==0) throw new Error('فشل إنشاء العميل');
+      selectedCustomerId = newId;
+      closeModal('customerModal');
+      await renderCustomers();
+      renderDashboard();
+      showToast('تم إضافة العميل — الآن أدخل قياساته','success');
+      setTimeout(async ()=>{
+        try{ await openMeasurementsWorkspace(newId); }catch(err){ console.error(err); }
+      }, 300);
+    }
+  } catch(err){
+    console.error('saveCustomer error', err);
+    showToast('حدث خطأ أثناء الحفظ: '+(err?.message||''),'error');
   }
 }
 async function deleteCustomer(id){
