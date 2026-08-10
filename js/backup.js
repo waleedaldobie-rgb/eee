@@ -44,7 +44,7 @@ async function restoreDB(input){
       }
     }
     showToast('تم استعادة البيانات بنجاح');
-    renderDashboard();renderCustomers();renderOrders();renderInventory();renderReports();renderEmployees();
+    renderDashboard();renderCustomers();renderOrders();renderInventory();renderReports();
   } catch(e){
     console.error(e);
     showToast('خطأ في قراءة الملف','error');

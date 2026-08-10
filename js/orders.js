@@ -30,7 +30,7 @@ async function renderOrders(){
       <th>تاريخ التسليم</th>
       <th>الحساب</th>
       <th>الحالة</th>
-      <th style="width:56px">إجراءات</th>
+      <th>إجراءات</th>
     </tr></thead>
     <tbody>
       ${filtered.map(o=>{
@@ -61,11 +61,7 @@ async function renderOrders(){
             </div>
           </td>
           <td>${getStatusBadge(o.status)}</td>
-          <td>
-            <div class="relative">
-              <button onclick="toggleOrderMenu(event, ${o.id})" class="action-menu-btn w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-500 transition"><i class="fas fa-ellipsis"></i></button>
-            </div>
-          </td>
+          <td><div class="flex gap-1.5 flex-wrap"><button onclick="editOrder(${o.id})" class="action-btn edit" title="تعديل"><i class="fas fa-pen"></i></button>${o.remaining>0?`<button onclick="openPaymentModal(${o.id})" class="action-btn pay" title="تسجيل دفعة"><i class="fas fa-dollar-sign"></i></button>`:''}<button onclick="printInvoice(${o.id})" class="action-btn print" title="فاتورة"><i class="fas fa-file-pdf"></i></button><button onclick="printQuotation(${o.id})" class="action-btn quote" title="عرض سعر"><i class="fas fa-file-invoice"></i></button><button onclick="deleteOrder(${o.id})" class="action-btn delete" title="حذف"><i class="fas fa-trash"></i></button></div></td>
         </tr>`;
       }).join('')}
     </tbody>
