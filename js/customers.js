@@ -139,24 +139,32 @@ async function editCustomer(id){
 async function saveCustomer(e){
   if(e) e.preventDefault();
   try{
-    const idEl=document.getElementById('customerId');
-    const nameEl=document.getElementById('custName');
-    const phoneEl=document.getElementById('custPhone');
-    const notesEl=document.getElementById('custNotes');
-    if(!idEl || !nameEl || !phoneEl){
-      showToast('خطأ في النموذج','error');
-      return;
-    }
-    const id=idEl.value.trim();
-    const name=nameEl.value.trim();
-    const phone=phoneEl.value.trim();
+    const form = e?.target?.tagName==='FORM' ? e.target : document.getElementById('customerForm');
+    const getVal = (id, name)=>{
+      let v='';
+      if(form && form.elements && form.elements[name]) v = form.elements[name].value;
+      else if(form && form.elements && form.elements[id]) v = form.elements[id].value;
+      else {
+        const el=document.getElementById(id);
+        if(el) v=el.value;
+      }
+      return (v||'').toString().trim();
+    };
+    const id = getVal('customerId','customerId');
+    const name = getVal('custName','custName');
+    const phone = getVal('custPhone','custPhone');
+    const notes = getVal('custNotes','custNotes');
+    console.log('saveCustomer values', {id, name, phone, notes});
     if(!name || !phone){
-      showToast('الاسم والجوال مطلوبان','error');
-      if(!name) nameEl.focus();
-      else phoneEl.focus();
+      showToast(`الاسم والجوال مطلوبان (الاسم:${name? '✓':'✕'} الجوال:${phone? '✓':'✕'})`,'error');
+      if(!name){
+        const el=document.getElementById('custName'); if(el) el.focus();
+      } else {
+        const el=document.getElementById('custPhone'); if(el) el.focus();
+      }
       return;
     }
-    const data={name, phone, notes: notesEl?notesEl.value.trim():'', createdAt:new Date().toISOString()};
+    const data={name, phone, notes, createdAt:new Date().toISOString()};
     if(id){
       const existing = await getById('customers', parseInt(id));
       if(existing?.measurements) data.measurements = existing.measurements;
