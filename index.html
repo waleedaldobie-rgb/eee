@@ -10,7 +10,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 <div id="toast" class="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
@@ -56,13 +56,17 @@
 <p class="text-xs text-slate-500 text-center mt-3">الإصدار 2.0 — أوفلاين بالكامل</p>
 </div>
 </aside>
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden" onclick="toggleSidebar()"></div>
 
 <!-- Main -->
 <main class="main-content">
 <header class="main-header">
+<div class="flex items-center gap-3">
+<button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 lg:hidden"><i class="fas fa-bars"></i></button>
 <div>
 <h2 class="text-2xl font-black text-slate-900" id="page-title">لوحة التحكم</h2>
 <p class="text-sm text-slate-400 mt-1" id="page-subtitle">نظرة شاملة على أداء المحل</p>
+</div>
 </div>
 <div class="flex items-center gap-3">
 <button onclick="showNotifications()" class="relative p-3 text-slate-400 hover:text-slate-600 bg-white rounded-xl shadow-sm border border-slate-100 transition">
@@ -686,18 +690,18 @@
 <button onclick="dropdownAction('delete')" class="danger"><i class="fas fa-trash"></i> حذف</button>
 </div>
 
-<script src="js/database.js?v=11"></script>
-<script src="js/utils.js?v=11"></script>
-<script src="js/navigation.js?v=11"></script>
-<script src="js/dashboard.js?v=11"></script>
-<script src="js/measurements.js?v=11"></script>
-<script src="js/customers.js?v=11"></script>
-<script src="js/orders.js?v=11"></script>
-<script src="js/inventory.js?v=11"></script>
-<script src="js/reports.js?v=11"></script>
-<script src="js/printing.js?v=11"></script>
-<script src="js/backup.js?v=11"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/database.js?v=12"></script>
+<script src="js/utils.js?v=12"></script>
+<script src="js/navigation.js?v=12"></script>
+<script src="js/dashboard.js?v=12"></script>
+<script src="js/measurements.js?v=12"></script>
+<script src="js/customers.js?v=12"></script>
+<script src="js/orders.js?v=12"></script>
+<script src="js/inventory.js?v=12"></script>
+<script src="js/reports.js?v=12"></script>
+<script src="js/printing.js?v=12"></script>
+<script src="js/backup.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
 
 <script>
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});

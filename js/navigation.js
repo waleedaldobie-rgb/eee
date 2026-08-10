@@ -39,8 +39,24 @@ function showPage(pageId){
   if(pageId==='inventory') renderInventory();
   if(pageId==='reports') renderReports();
 
+  // close sidebar on mobile after navigation
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebarOverlay');
+  if(window.innerWidth<1024 && sidebar && sidebar.classList.contains('open')){
+    sidebar.classList.remove('open');
+    if(overlay) overlay.classList.add('hidden');
+  }
+
   // close any dropdown/modal
   const dd = document.getElementById('actionDropdown');
   if(dd) dd.classList.add('hidden');
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function toggleSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebarOverlay');
+  if(!sidebar) return;
+  sidebar.classList.toggle('open');
+  if(overlay) overlay.classList.toggle('hidden');
 }
